@@ -37,7 +37,6 @@ class PopupUploadDTO:
     captionSummary: str
     caption: str
     mediaType: str
-    imageUrl: Optional[str]
     imageList: List[PopupImageDTO]
     recommendIds: List[int]
     isActive: bool = True
@@ -70,8 +69,6 @@ def build_payload(item: dict) -> PopupUploadDTO:
     """원본 dict → DTO 변환"""
     image_paths = item.get("image_paths", [])
     image_list = build_image_list(image_paths)
-    image_urls = item.get("image_url", [])
-    image_url_first = image_urls[0] if image_urls else None
 
     return PopupUploadDTO(
         name=item.get("name"),
@@ -90,9 +87,8 @@ def build_payload(item: dict) -> PopupUploadDTO:
         captionSummary=item.get("caption_summary"),
         caption=item.get("caption"),
         mediaType=item.get("media_type"),
-        imageUrl=image_url_first,
         imageList=image_list,
-        recommendIds=[1],
+        recommendIds=item.get("recommend"),
     )
 
 
@@ -124,7 +120,8 @@ class Mysql:
     @staticmethod
     def play():
         # ✅ 환경 변수 로드
-        BASE_DIR = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else os.getcwd()
+        # BASE_DIR = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else os.getcwd()
+        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         env_path = os.path.join(BASE_DIR, ".env")
         file_path = os.path.join(BASE_DIR, "geo.json")
         load_dotenv(dotenv_path=env_path, override=True)
@@ -136,7 +133,7 @@ class Mysql:
         print(f"🌐 API URL: {API_URL}")
 
         if not os.path.exists(file_path):
-            print("❌ popup_with_geo.json 파일이 없습니다.")
+            print("❌ geo.json 파일이 없습니다.")
             return
 
         with open(file_path, "r", encoding="utf-8") as f:

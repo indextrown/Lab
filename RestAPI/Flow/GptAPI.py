@@ -9,6 +9,39 @@ from urllib.parse import urlparse
 from dataclasses import dataclass
 from typing import List, Optional
 
+# ==============================
+# 📊 카테고리 매핑
+# ==============================
+CATEGORY_MAP = {
+    "기타": 99,
+    "패션": 1,
+    "뷰티": 2,
+    "디저트": 3,
+    "카페": 4,
+    "주류": 5,
+    "IT": 6,
+    "생활용품": 7,
+    "스포츠": 8,
+    "영화": 9,
+    "애니메이션": 10,
+    "웹툰": 11,
+    "연예인": 12,
+    "문화/예술": 13,
+    "여행": 14,
+    "반려동물": 15,
+    "게임": 16,
+    "책": 17,
+    "금융": 18,
+    "친환경": 19,
+    "키즈": 20
+}
+
+def convert_recommend_to_ids(recommend_list: List[str]) -> List[int]:
+    ids = [CATEGORY_MAP[name] for name in recommend_list if name in CATEGORY_MAP]
+    if not ids:
+        ids = [0]  # 기본값: 기타
+    return ids
+
 
 # ==============================
 # 📦 DTO 정의
@@ -35,6 +68,7 @@ class GptParsedEventDTO:
     region: str
     geocoding_query: str
     caption_summary: str
+    recommend: list[str]
     section: Optional[int] = None
 
 @dataclass
@@ -55,6 +89,7 @@ class PopupEventDTO:
     image_url: List[str]
     image_paths: List[str]
     media_type: str
+    recommend: List[int]
 
 
 # ==============================
@@ -62,7 +97,7 @@ class PopupEventDTO:
 # ==============================
 
 class GptAPI:
-    REQUIRED_FIELDS = ["name", "start_date", "end_date", "address", "region", "caption_summary"]  # ✅ 추가
+    REQUIRED_FIELDS = ["name", "start_date", "end_date", "address", "region", "caption_summary", "recommend"]  # ✅ 추가
     def __init__(self, access_token, model="gpt-4o-mini"):
         self.access_token = access_token
         self.model = model
@@ -118,6 +153,8 @@ class GptAPI:
 
         # ✅ 여기서 required_fields 문자열화
         required_list_str = ", ".join(self.REQUIRED_FIELDS)
+        categories_str = ", ".join(CATEGORY_MAP.keys())
+
         return f"""
         아래에는 여러 개의 '섹션' 텍스트가 주어집니다.
         각 섹션에는 하나 이상의 팝업 이벤트 정보가 포함될 수 있습니다.
@@ -179,6 +216,47 @@ class GptAPI:
             따뜻한 향이 퍼지는 공간에서 잼과 빵을 함께 즐길 수 있습니다.\n
             다양한 수제잼과 베이커리 굿즈가 전시되어 있고, 일부 상품은 현장 구매도 가능합니다.\n
             하루의 시작을 부드럽게 채워주는 작은 휴식 같은 팝업입니다.\n"
+
+        - recommend : 아래 목록 중에서 관련된 팝업 카테고리를 **1개 이상, 최대 3개까지** 선택하여 배열로 반환하세요.
+            - [{categories_str}]
+            📌 **선택 기준**:
+                1) 캡션 또는 팝업 이름에서 핵심 키워드를 추출하여 가장 연관성이 높은 카테고리를 우선 선택하세요.
+                - 예: "스타벅스", "카페", "커피", "음료" → "카페"
+                - 예: "한정판 스니커즈", "신발", "옷", "패션쇼" → "패션"
+                - 예: "맥주", "위스키", "칵테일" → "주류"
+                - 예: "팝콘", "상영", "영화관" → "영화"
+                - 예: "애니", "만화", "코스프레" → "애니메이션"
+                - 예: "웹툰", "네이버웹툰", "작가전" → "웹툰"
+                - 예: "팬사인회", "가수", "아이돌", "팬미팅" → "연예인"
+                - 예: "여행", "관광", "숙소", "항공", "해외" → "여행"
+                - 예: "강아지", "고양이", "반려동물" → "반려동물"
+                - 예: "게임", "콘솔", "PC방", "플레이" → "게임"
+                - 예: "책", "북카페", "서점" → "책"
+                - 예: "금융", "은행", "카드", "투자" → "금융"
+                - 예: "에코", "환경", "제로웨이스트" → "친환경"
+                - 예: "키즈", "어린이", "유아" → "키즈"
+                - 예: "의류", "가방", "악세서리" → "패션"
+                - 예: "화장품", "향수", "메이크업" → "뷰티"
+                - 예: "케이크", "쿠키", "초콜릿" → "디저트"
+                - 예: "커피", "음료", "티룸" → "카페"
+                - 예: "테크", "스마트폰", "전자기기" → "IT"
+                - 예: "리빙", "인테리어", "가구" → "생활용품"
+                - 예: "운동", "러닝", "스포츠브랜드" → "스포츠"
+                - 예: "전시회", "아트", "페어", "체험" → "문화/예술"
+
+                2) 키워드가 두 가지 이상 관련될 경우 복수 선택 가능 (최대 3개).
+                - 예: “디저트 카페” → ["디저트", "카페"]
+
+                3) 관련 카테고리를 찾을 수 없을 경우에만 "기타"를 선택하세요.
+                - 단순히 아무 키워드를 찾지 못했다고 해서 무조건 "기타"를 넣지 마세요.
+                - 브랜드명, 제품군, 팝업 테마를 근거로 적극적으로 판단하세요.
+
+            📌 **반환 형식 예시**:
+                - recommend: ["패션"]
+                - recommend: ["카페", "디저트"]
+                - recommend: ["친환경", "패션", "카페"]
+                - recommend: ["기타"]
+
 
         ─────────────────────────────
         ❗ 포함 기준
@@ -255,6 +333,9 @@ class GptAPI:
             return []
         parsed = []
         for obj in data:
+            if "recommend" not in obj:
+                print(f"⚠️ recommend 누락 → {obj.get('name')}")
+            recommend_list = obj.get("recommend") or ["기타"]
             parsed.append(
                 GptParsedEventDTO(
                     name=(obj.get("name") or "").strip(),
@@ -266,6 +347,7 @@ class GptAPI:
                     region=(obj.get("region") or "").strip(),
                     geocoding_query=(obj.get("geocoding_query") or "").strip(),
                     caption_summary=(obj.get("caption_summary") or "").strip(),
+                    recommend=recommend_list,
                     section=int(obj["section"]) if obj.get("section") is not None else None
                 )
             )
@@ -279,10 +361,20 @@ class GptAPI:
     def filter_required_fields(self, events: List[PopupEventDTO]) -> List[PopupEventDTO]:
         valid = []
         for e in events:
-            missing = [f for f in self.REQUIRED_FIELDS if not getattr(e, f, "").strip()]
+            missing = []
+            for f in self.REQUIRED_FIELDS:
+                value = getattr(e, f, "")
+                # 문자열일 경우 공백 체크
+                if isinstance(value, str) and not value.strip():
+                    missing.append(f)
+                # 리스트일 경우 비어있는지 체크
+                elif isinstance(value, list) and len(value) == 0:
+                    missing.append(f)
+
             if missing:
                 print(f"⚠️ 필수 필드 누락({missing}) → {e.name or '이름 없음'} 제외")
                 continue
+
             valid.append(e)
         return valid
 
@@ -291,6 +383,9 @@ class GptAPI:
         results: List[PopupEventDTO] = []
         for event in extracted:
             orig = section_to_post.get(event.section, InstagramPostDTO("", "", "", "", []))
+            recommend_ids = convert_recommend_to_ids(event.recommend)  # ✅ 문자열 → 정수 변환
+
+            print("디버깅: recommend 문자열:", event.recommend, "→ recommend IDs:", recommend_ids)
             results.append(
                 PopupEventDTO(
                     name=event.name,
@@ -308,6 +403,7 @@ class GptAPI:
                     image_url=orig.media_urls,
                     image_paths=[],  # 다운로드 후 채워짐
                     media_type=orig.media_type,
+                    recommend=recommend_ids   # ✅ 여기서 int 배열로 변환 완료
                 )
             )
         return results
@@ -393,6 +489,8 @@ class GptAPI:
             prompt = self.build_prompt(chunk)
             try:
                 resp_text = self.call_gpt(prompt)
+                # print("==== GPT RAW RESPONSE ====")
+                # print(resp_text)
                 extracted = self.extract_json_array(resp_text)
                 all_extracted.extend(extracted)
             except Exception as e:
