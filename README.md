@@ -12,6 +12,9 @@ pyenv install 3.10.12
 pyenv virtualenv 3.10.12 rng-venv
 
 # 환경변수 설정
+vi ~/.zshrc
+
+# 븉여넣기
 export PATH="$HOME/.pyenv/bin:$PATH"
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"

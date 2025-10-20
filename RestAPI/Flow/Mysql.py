@@ -38,7 +38,7 @@ class PopupUploadDTO:
     caption: str
     mediaType: str
     imageList: List[PopupImageDTO]
-    recommendIds: List[int]
+    recommendIdList: List[int]
     isActive: bool = True
 
 
@@ -88,7 +88,7 @@ def build_payload(item: dict) -> PopupUploadDTO:
         caption=item.get("caption"),
         mediaType=item.get("media_type"),
         imageList=image_list,
-        recommendIds=item.get("recommend"),
+        recommendIdList=item.get("recommend"),
     )
 
 
