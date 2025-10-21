@@ -18,9 +18,15 @@ client = vision.ImageAnnotatorClient(
 
 # ✅ 사람이 포함됐는지 판별할 키워드 목록
 HUMAN_KEYWORDS = [
-    "person", "people", "man", "woman", "child", "boy", "girl",
-    "baby", "toddler", "human", "crowd", "family", "kid", "infant", "teenager",
-    "model", "fashion", "performance", "singer", "actor", "face"
+    # 인물 기본
+    "person", "people", "human", "face",
+
+    # 성별·연령
+    "man", "woman", "boy", "girl",
+    "child", "kid", "baby", "toddler", "infant", "teenager",
+
+    # 집단
+    "crowd", "family", "group",
 ]
 
 # ===================================
