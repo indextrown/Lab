@@ -119,16 +119,14 @@ class Mysql:
 
     @staticmethod
     def play():
-        # ✅ 환경 변수 로드
-        # BASE_DIR = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else os.getcwd()
-        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        env_path = os.path.join(BASE_DIR, ".env")
-        file_path = os.path.join(BASE_DIR, "geo.json")
+        # ✅ 환경 변수 로드 (GeoCoding 방식과 동일)
+        env_path = os.path.join(os.getcwd(), ".env")
+        file_path = os.path.join(os.getcwd(), "geo.json")
         load_dotenv(dotenv_path=env_path, override=True)
 
         API_URL = os.getenv("POPUP_API_URL", "https://poppang.co.kr/api/v1/popup")
 
-        print(f"📂 BASE_DIR: {BASE_DIR}")
+        print(f"📂 Working DIR: {os.getcwd()}")
         print(f"📄 JSON 경로: {file_path} → 존재? {os.path.exists(file_path)}")
         print(f"🌐 API URL: {API_URL}")
 
