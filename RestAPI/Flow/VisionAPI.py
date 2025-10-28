@@ -212,4 +212,12 @@ if __name__ == "__main__":
         "https://scontent-icn2-1.cdninstagram.com/v/t51.82787-15/565417090_17864747205473410_3126136565006634466_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=108&ccb=1-7&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0FST1VTRUxfSVRFTS5iZXN0X2ltYWdlX3VybGdlbi5DMyJ9&_nc_ohc=hd8y4X23JGMQ7kNvwFwRexL&_nc_oc=AdnE1KUZNxyhYYZ5KKjcCMvvZR2oBDHXJ5WAQwkKJaoNpizxm4AGoqBIbxzXYskWuPc&_nc_zt=23&_nc_ht=scontent-icn2-1.cdninstagram.com&edm=AEoDcc0EAAAA&_nc_gid=GlzyGCrbEDWlbvWdep2TBQ&oh=00_Afc-KMxIrJpYK3iefhT3xW3tmuXibVXHazGyxSjcX7873g&oe=68F5AFC0",
         "https://scontent-icn2-1.cdninstagram.com/v/t51.82787-15/565417090_17864747205473410_3126136565006634466_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=108&ccb=1-7&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0FST1VTRUxfSVRFTS5iZXN0X2ltYWdlX3VybGdlbi5DMyJ9&_nc_ohc=hd8y4X23JGMQ7kNvwFwRexL&_nc_oc=AdnE1KUZNxyhYYZ5KKjcCMvvZR2oBDHXJ5WAQwkKJaoNpizxm4AGoqBIbxzXYskWuPc&_nc_zt=23&_nc_ht=scontent-icn2-1.cdninstagram.com&edm=AEoDcc0EAAAA&_nc_gid=GlzyGCrbEDWlbvWdep2TBQ&oh=00_Afc-KMxIrJpYK3iefhT3xW3tmuXibVXHazGyxSjcX7873g&oe=68F5AFC0"
     ]
+
+    num = 1
+    base_url = f"https://poppang.co.kr/images/20251022-203046_18006553517650048/%EC%BF%A0%ED%82%A4%EB%9F%B0__%EB%85%B8%EB%A5%B4%EB%94%94%EC%8A%A4%ED%81%AC_%EC%BF%A0%ED%82%A4%EC%BA%A0%ED%94%84_{num}.jpg"
+    url_list = []
+    for i in range(1, 12+1):
+        url_list.append(base_url)
+        print(base_url)
+        num += 1
     print(f"[URL 여러 개] {contains_human_in_all_urls(url_list)}")
