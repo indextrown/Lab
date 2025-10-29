@@ -6,15 +6,11 @@ cred = credentials.Certificate("./poppangfcm-firebase-adminsdk-fbsvc-84728d5589.
 firebase_admin.initialize_app(cred)
 
 # 2. 대상 유저의 FCM 토큰
-# fcm_token = "cH-dvJ7z2kw6gbHN0f5i30:APA91bGHowI2xL5x2-DMDXv-WIHvi26qC3RmVpMn1lzL0Tq7n4tdpLPAWYkJeUYBN5ZSX1RGw_c_oCmrinM6_-NpZzP9ybfh0OCHrwPVZGBe5tvsQZFiuSc"
-fcm_token = "frTpybf7i0f-oUazlNgbR3:APA91bEFjxEG7FXPspH7yqc18ODoDel6t-yED20Ol5XSzzHf-IWZAm4-RR5UaI1n3T_2LA0e2Cch51E6nww629GiITaJfuq2RWTQxHv5cvGuTEPSvn6g5kE"
-
-# 도날드
-# fcm_token = "c-PxUkfo4U3Fpaegcg3AU0:APA91bGBC513AfSGA8qTge0GY45iKOs8MVJc5c3IHwEYB_QE_yLv3vQvJUjN4Q7Z8yvO0iM4JWMwnWslZfD8LT3WEsUklK841AhWXXForqu3uWVEXtwy5Uc"
-
+# fcm_token = "c-PxUkfo4U3Fpaegcg3AU0:APA91bGBC513AfSGA8qTge0GY45iKOs8MVJc5c3IHwEYB_QE_yLv3vQvJUjN4Q7Z8yvO0iM4JWMwnWslZfD8LT3WEsUklK841AhWXXForqu3uWVEXtwy5Uc" # 도날드
 fcm_token = "c-Btjy_7oEtBvw8f_sQ0mv:APA91bELRshMqNU32Rme8L5QYRXcIwQ13RP6Ov0cWURMRz_Tql9rjgXpWEgnNcg1whvwhxpOstkH_tHwpHrkax5T5-YwznSHUnS_XNKpVZp-sBYSDjDk7Fg"
 
 
+# 내용
 title = "새 팝업 오픈 🎉"
 body = "짱구 팝업이 부산에서 열렸어요!\n11.05 ~ 11.09"
 
