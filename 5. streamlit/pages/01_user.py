@@ -1,3 +1,10 @@
+# ------------------------------------------------------------
+# ✅ 0. 비밀번호 기능 추가
+# ------------------------------------------------------------
+from auth import require_login
+require_login()
+
+
 import streamlit as st
 import pandas as pd
 from db import get_connection

@@ -4,3 +4,4 @@ streamlit
 pymysql
 cryptography
 dotenv
+streamlit-cookies-manager

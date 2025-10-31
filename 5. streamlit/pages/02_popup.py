@@ -1,3 +1,9 @@
+# ------------------------------------------------------------
+# ✅ 0. 비밀번호 기능 추가
+# ------------------------------------------------------------
+from auth import require_login
+require_login()
+
 import streamlit as st
 import pandas as pd
 from db import get_connection
@@ -14,6 +20,7 @@ def load_popups():
             cursor.execute("""
                 SELECT id, name, start_date, end_date, address, region,
                        insta_post_url, is_active, caption_summary,
+                       latitude, longitude,
                        created_at, updated_at
                 FROM popup
                 ORDER BY id DESC;
@@ -44,16 +51,17 @@ df = load_popups()
 if df.empty:
     st.info("등록된 팝업이 없습니다.")
 else:
-    # ✅ 필터 박스
-    col1, col2 = st.columns([1, 4])
+    col1, col2, col3 = st.columns([1, 1, 3])
     with col1:
         filter_active = st.selectbox(
             "활성화 여부 필터",
             options=["전체", "활성(1)", "비활성(0)"],
             index=0
         )
+    with col2:
+        group_by_coords = st.checkbox("🧭 위경도 동일한 팝업끼리 묶어서 보기", value=False)
 
-    # ✅ 필터 적용
+    # ✅ 활성 여부 필터
     if filter_active == "활성(1)":
         filtered_df = df[df["is_active"] == 1]
     elif filter_active == "비활성(0)":
@@ -61,8 +69,59 @@ else:
     else:
         filtered_df = df
 
+# ------------------------------------------------------------
+# 🧭 위경도 동일 그룹화 표시 (2개 이상인 그룹만)
+# ------------------------------------------------------------
+# ------------------------------------------------------------
+# 🧭 위경도 동일 그룹화 표시 (2개 이상인 그룹만 + address 포함)
+# ------------------------------------------------------------
+if group_by_coords:
+    if "latitude" in filtered_df.columns and "longitude" in filtered_df.columns:
+        # 그룹화: 위도, 경도, 주소 기준
+        grouped = (
+            filtered_df.groupby(["latitude", "longitude", "address"])
+            .agg({"id": "count"})
+            .reset_index()
+            .rename(columns={"id": "count"})
+        )
+
+        # ✅ 2개 이상인 그룹만 필터링
+        grouped = grouped[grouped["count"] >= 2]
+
+        if grouped.empty:
+            st.info("⚠️ 동일한 위경도를 가진 팝업이 2개 이상인 그룹이 없습니다.")
+        else:
+            st.write("### 📍 동일 위경도 그룹 (2개 이상)")
+            st.dataframe(
+                grouped[["latitude", "longitude", "address", "count"]],
+                use_container_width=True
+            )
+
+            st.markdown("---")
+            st.write("### 🔍 그룹별 상세 보기")
+
+            for _, row in grouped.iterrows():
+                lat, lon, addr, count = row["latitude"], row["longitude"], row["address"], row["count"]
+                same_coord_df = filtered_df[
+                    (filtered_df["latitude"] == lat) &
+                    (filtered_df["longitude"] == lon)
+                ]
+
+                with st.expander(f"📍 ({lat}, {lon}) — {count}개 팝업 | {addr}"):
+                    st.dataframe(
+                        same_coord_df[
+                            ["id", "name", "region", "address", "start_date", "end_date", "is_active"]
+                        ],
+                        use_container_width=True
+                    )
+
+            st.success(f"✅ 총 {len(grouped)}개 위경도 그룹 표시 중 (2개 이상만 표시)")
+    else:
+        st.warning("⚠️ latitude, longitude 컬럼이 존재하지 않습니다.")
+else:
     st.dataframe(filtered_df, use_container_width=True)
     st.success(f"✅ 총 {len(filtered_df)}개 팝업 표시 중 (전체 {len(df)}개)")
+
 
 # ------------------------------------------------------------
 # 🧩 CRUD
