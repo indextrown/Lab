@@ -7,3 +7,4 @@ pandas
 openpyxl
 google-cloud-vision
 urllib3<2
+firebase_admin
