@@ -101,3 +101,62 @@ if __name__ == "__main__":
     finally:
         driver.quit()
         shutdown()
+
+
+
+
+# # ✅ 프로세스 강제 종료
+# def shutdown(process_name: str = "chrome"):
+#     """남아있는 크롬 프로세스 정리"""
+#     for proc in psutil.process_iter(['pid', 'name']):
+#         try:
+#             if process_name.lower() in (proc.info['name'] or '').lower():
+#                 print(f"Terminating {proc.info['name']} (PID {proc.info['pid']})")
+#                 proc.terminate()
+#                 proc.wait(timeout=3)
+#                 print(f"✅ {proc.info['name']} 종료 완료")
+#         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+#             pass
+
+
+# # ✅ 드라이버 설정 함수
+# def driver_Settings(headless: bool = False, exit: bool = True):
+#     options = Options()
+
+#     if not exit:
+#         options.add_experimental_option("detach", True)
+
+#     if headless:
+#         options.add_argument("--headless=new")
+
+#     options.add_argument(
+#         'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+#         'AppleWebKit/537.36 (KHTML, like Gecko) '
+#         'Chrome/120.0.0.0 Safari/537.36'
+#     )
+#     options.add_argument('lang=ko_KR')
+#     options.add_argument('--window-size=932,932')
+#     options.add_argument('--disable-gpu')
+#     options.add_argument('--disable-infobars')
+#     options.add_argument('--disable-extensions')
+#     options.add_argument('--disable-blink-features=AutomationControlled')
+#     options.add_argument('--disable-automation')
+#     options.add_argument("--no-sandbox")
+#     options.add_argument("--disable-dev-shm-usage")
+#     options.add_experimental_option("excludeSwitches", ["enable-automation"])
+#     options.add_experimental_option('useAutomationExtension', False)
+
+#     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
+#     # navigator.webdriver 감지 우회
+#     driver.execute_cdp_cmd(
+#         "Page.addScriptToEvaluateOnNewDocument",
+#         {"source": """
+#             Object.defineProperty(navigator, 'webdriver', {
+#                 get: () => undefined
+#             })
+#         """}
+#     )
+
+#     return driver
+
