@@ -9,6 +9,7 @@ import psutil
 import time
 import pandas as pd
 import openpyxl
+from selenium.webdriver.remote.webelement import WebElement
 
 # ✅ 컨텍스트 매니저 클래스
 class Browser:
@@ -126,25 +127,44 @@ class Browser:
         self.br_log_default(f"⚙️ Executing JS: {script[:60]}...")
         return self._driver.execute_script(script, *args)
 
+    # def br_find(self, by, value):
+    #     """단일 요소"""
+    #     try:
+    #         el = self._driver.find_element(by, value)
+    #         self.br_log_default(f"🔍 Found element: {value}")
+    #         return el
+    #     except Exception as e:
+    #         self.br_log_error(f"❌ 요소 탐색 실패: {value} ({e})")
+    #         return None
+
+    # def br_find_all(self, by, value):
+    #     """여러 요소"""
+    #     try:
+    #         els = self._driver.find_elements(by, value)
+    #         self.br_log_default(f"🔎 Found {len(els)} elements: {value}")
+    #         return els
+    #     except Exception as e:
+    #         self.br_log_error(f"❌ 여러 요소 탐색 실패: {value} ({e})")
+    #         return []
+
     def br_find(self, by, value):
-        """단일 요소"""
         try:
             el = self._driver.find_element(by, value)
             self.br_log_default(f"🔍 Found element: {value}")
-            return el
+            return BrElement(el, self)
         except Exception as e:
             self.br_log_error(f"❌ 요소 탐색 실패: {value} ({e})")
             return None
 
     def br_find_all(self, by, value):
-        """여러 요소"""
         try:
             els = self._driver.find_elements(by, value)
             self.br_log_default(f"🔎 Found {len(els)} elements: {value}")
-            return els
+            return [BrElement(e, self) for e in els]
         except Exception as e:
             self.br_log_error(f"❌ 여러 요소 탐색 실패: {value} ({e})")
             return []
+
     
     def br_click(self, by, value):
         """요소 클릭 (보이지 않아도 강제 클릭 시도)"""
@@ -166,7 +186,48 @@ class Browser:
         """스크롤 끝까지 내리기"""
         self._driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
+# ------------------------
+# WebElement 확장 클래스
+# ------------------------
+class BrElement:
+    def __init__(self, element: WebElement, driver):
+        self._el = element
+        self._driver = driver  # Browser 참조용
 
+    def br_find(self, by, value):
+        try:
+            el = self._el.find_element(by, value)
+            self._driver.br_log_default(f"🔍 Found element: {value}")
+            return BrElement(el, self._driver)
+        except Exception as e:
+            self._driver.br_log_error(f"❌ 요소 탐색 실패: {value} ({e})")
+            return None
+
+    def br_find_all(self, by, value):
+        try:
+            els = self._el.find_elements(by, value)
+            self._driver.br_log_default(f"🔎 Found {len(els)} elements: {value}")
+            return [BrElement(e, self._driver) for e in els]
+        except Exception as e:
+            self._driver.br_log_error(f"❌ 여러 요소 탐색 실패: {value} ({e})")
+            return []
+
+    def get_attribute(self, name):
+        return self._el.get_attribute(name)
+    
+    def br_click(self):
+        try:
+            self._el.click()
+            self._driver.br_log_default("🖱️ Clicked element")
+        except Exception:
+            self._driver._driver.execute_script("arguments[0].click();", self._el)
+            self._driver.br_log_default("🖱️ Clicked element (via JS)")
+
+    # 구글 뉴스 같은 크롤링에선 줄바꿈 문자나 공백이 섞이기 쉬워서 아래처럼 다듬는 게 좋아요:
+    @property
+    def text(self):
+        # return self._el.text
+        return self._el.text.strip().replace("\n", " ")
 
 # ✅ 사용 예시
 # if __name__ == "__main__":
@@ -195,14 +256,14 @@ if __name__ == "__main__":
 
             for post in posts:
                 try:
-                    post_info = post.find_elements(
+                    post_info = post.br_find_all(
                         By.CSS_SELECTOR, "div > div > a > div > div:nth-child(2) > div"
                     )
                     company = post_info[0].text if len(post_info) > 0 else ""
                     title = post_info[1].text if len(post_info) > 1 else ""
                     content = post_info[2].text if len(post_info) > 2 else ""
                     time_text = post_info[-1].text if post_info else ""
-                    post_url = post.find_element(
+                    post_url = post.br_find(
                         By.CSS_SELECTOR, "div > div > a"
                     ).get_attribute("href")
 
