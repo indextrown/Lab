@@ -6,17 +6,42 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import psutil
-import time
-import pandas as pd
-import openpyxl
+import time, random
+# import pandas as pd
+# import openpyxl
 from selenium.webdriver.remote.webelement import WebElement
+from Logger import Logger
+import platform, sys, os
+import pyperclip 
+from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import ElementNotInteractableException
+import pyautogui
 
 # ✅ 컨텍스트 매니저 클래스
 class Browser:
     def __init__(self, log: bool = True, **opts):
         self._driver = None
         self.opts = opts
-        self.log = log
+        self.log = Logger("[Browser]", enable=log)
+
+        # 실행 환경 정보
+        self.system_info = self.__get_system_info()
+        self.br_log_info(f"🧠 실행 시스템: {self.system_info['os_name']} | "
+                         f"{self.system_info['architecture']} | "
+                         f"Python {self.system_info['python_version']}")
+        
+        # ✅ OS에 따라 단축키 지정
+        self.ctrl_key = Keys.COMMAND if self.system_info["os_name"] == "Darwin" else Keys.CONTROL
+    
+    def __get_system_info(self) -> dict:
+        """실행 중인 OS 및 시스템 정보를 반환"""
+        return {
+            "os_name": platform.system(),          # e.g., 'Darwin', 'Windows', 'Linux'
+            "os_version": platform.version(),      # e.g., '23.5.0'
+            "architecture": platform.machine(),    # e.g., 'arm64' or 'x86_64'
+            "python_version": platform.python_version(),  # e.g., '3.11.7'
+            "user": os.getenv("USER") or os.getenv("USERNAME", "Unknown")
+        }
 
     def __enter__(self):
         self.br_log_info("🚀 driver 세팅 중...")
@@ -81,35 +106,14 @@ class Browser:
             {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"}
         )
         return driver
-
-    # ------------------------
-    # 내부 로그 처리 (_log)
-    # ------------------------
-    def __log(self, msg: str, color: str = None):
-        """로그 출력 (color='green'|'red'|None)
-        [Browser]는 고정된 bold white, msg만 색상 적용
-        """
-        if not self.log:
-            return
-
-        colors = {
-            "green": "\033[92m",
-            "red": "\033[91m",
-            None: "\033[0m",
-        }
-        prefix_color = "\033[90m"
-        msg_color = colors.get(color, "\033[0m")
-        reset = "\033[0m"
-
-        print(f"{prefix_color}[Browser]{reset} {msg_color}{msg}{reset}")
     
     # ------------------------
     # 외부용 헬퍼 메서드
     # ------------------------
-    def br_log_info(self, msg: str): self.__log(msg, color="green")
-    def br_log_error(self, msg: str): self.__log(msg, color="red")
-    def br_log_default(self, msg: str): self.__log(msg, color=None)
-    
+    def br_log_info(self, msg: str): self.log.info(msg)
+    def br_log_error(self, msg: str): self.log.error(msg)
+    def br_log_default(self, msg: str): self.log.plain(msg)
+
     # ------------------------
     # Browser 전용 기능 메서드
     # ------------------------
@@ -127,54 +131,6 @@ class Browser:
         self.br_log_default(f"⚙️ Executing JS: {script[:60]}...")
         return self._driver.execute_script(script, *args)
 
-    # def br_find(self, by, value):
-    #     """단일 요소"""
-    #     try:
-    #         el = self._driver.find_element(by, value)
-    #         self.br_log_default(f"🔍 Found element: {value}")
-    #         return el
-    #     except Exception as e:
-    #         self.br_log_error(f"❌ 요소 탐색 실패: {value} ({e})")
-    #         return None
-
-    # def br_find_all(self, by, value):
-    #     """여러 요소"""
-    #     try:
-    #         els = self._driver.find_elements(by, value)
-    #         self.br_log_default(f"🔎 Found {len(els)} elements: {value}")
-    #         return els
-    #     except Exception as e:
-    #         self.br_log_error(f"❌ 여러 요소 탐색 실패: {value} ({e})")
-    #         return []
-
-    def br_find(self, by, value):
-        try:
-            el = self._driver.find_element(by, value)
-            self.br_log_default(f"🔍 Found element: {value}")
-            return BrElement(el, self)
-        except Exception as e:
-            self.br_log_error(f"❌ 요소 탐색 실패: {value} ({e})")
-            return None
-
-    def br_find_all(self, by, value):
-        try:
-            els = self._driver.find_elements(by, value)
-            self.br_log_default(f"🔎 Found {len(els)} elements: {value}")
-            return [BrElement(e, self) for e in els]
-        except Exception as e:
-            self.br_log_error(f"❌ 여러 요소 탐색 실패: {value} ({e})")
-            return []
-
-    
-    def br_click(self, by, value):
-        """요소 클릭 (보이지 않아도 강제 클릭 시도)"""
-        el = self.br_find(by, value)
-        try:
-            el.click()
-        except Exception:
-            self._driver.execute_script("arguments[0].click();", el)
-        self.br_log_default(f"🖱️ Clicked element: {value}")
-
     def br_wait_for(self, by, value, timeout=10):
         """요소가 나타날 때까지 대기"""
         WebDriverWait(self._driver, timeout).until(
@@ -185,6 +141,27 @@ class Browser:
     def br_scroll_to_bottom(self):
         """스크롤 끝까지 내리기"""
         self._driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+    def br_find(self, by, value):
+        """전체 페이지에서 요소 1개 탐색 (Browser 기준)"""
+        try:
+            el = self._driver.find_element(by, value)
+            # self.br_log_default(f"🔍 Found element: {value}")
+            return BrElement(el, self)
+        except Exception as e:
+            self.br_log_error(f"❌ 요소 탐색 실패: {value} ({e})")
+            return None
+
+    def br_find_all(self, by, value):
+        """전체 페이지에서 요소 여러 개 탐색 (Browser 기준)"""
+        try:
+            els = self._driver.find_elements(by, value)
+            self.br_log_default(f"🔎 Found {len(els)} elements: {value}")
+            return [BrElement(e, self) for e in els]
+        except Exception as e:
+            self.br_log_error(f"❌ 여러 요소 탐색 실패: {value} ({e})")
+            return []
+
 
 # ------------------------
 # WebElement 확장 클래스
@@ -197,7 +174,7 @@ class BrElement:
     def br_find(self, by, value):
         try:
             el = self._el.find_element(by, value)
-            self._driver.br_log_default(f"🔍 Found element: {value}")
+            # self._driver.br_log_default(f"🔍 Found element: {value}")
             return BrElement(el, self._driver)
         except Exception as e:
             self._driver.br_log_error(f"❌ 요소 탐색 실패: {value} ({e})")
@@ -218,7 +195,7 @@ class BrElement:
     def br_click(self):
         try:
             self._el.click()
-            self._driver.br_log_default("🖱️ Clicked element")
+            # self._driver.br_log_default("🖱️ Clicked element")
         except Exception:
             self._driver._driver.execute_script("arguments[0].click();", self._el)
             self._driver.br_log_default("🖱️ Clicked element (via JS)")
@@ -228,54 +205,111 @@ class BrElement:
     def text(self):
         # return self._el.text
         return self._el.text.strip().replace("\n", " ")
+    
+    # 원문이 필요할 때
+    def raw_text(self):
+        """원본 줄바꿈 포함 텍스트"""
+        return self._el.text
+    
+    # ------------------------
+    # 📋 복사 / 붙여넣기 메서드
+    # ------------------------
+    def br_copy(self):
+        """요소의 value/text를 클립보드에 복사"""
+        try:
+            value = self._el.get_attribute("value") or self._el.text
+            value = value.strip()
+            pyperclip.copy(value)
+            self._driver.br_log_default(f"📋 복사 완료: '{value[:40]}...'")
+            return value
+        except Exception as e:
+            self._driver.br_log_error(f"❌ 복사 실패: {e}")
+            return None
+
+    def br_paste(self, text: str, min_delay=0.05, max_delay=0.15):
+        """pyperclip + pyautogui.hold 방식으로 자연스러운 붙여넣기"""
+        try:
+            pyperclip.copy(text)
+            self._el.click()
+            time.sleep(0.5)
+            key = "command" if platform.system() == "Darwin" else "ctrl"
+            with pyautogui.hold([key]):
+                pyautogui.press("v")
+            time.sleep(0.5)
+            # self._driver.br_log_default("📎 붙여넣기 완료")
+        except Exception as e:
+            self._driver.br_log_error(f"❌ 붙여넣기 실패: {e}")
+
+
 
 # ✅ 사용 예시
-# if __name__ == "__main__":
-#     with Browser(headless=False, exit=False) as driver:
-#         driver.br_get("https://www.naver.com")
-#         driver.br_log_default("네이버 접속 완료")
-#         driver.br_screenshot("naver.png")
-
-
-
+# 초록색 로그: 시스템 제어 
+# 일반색 로그: 기능 실행
 if __name__ == "__main__":
-    search = "아이폰"
-    page_nums = 5
-    data = []
-
     with Browser(headless=False, exit=False) as driver:
-        driver.br_log_default(f"🔍 구글 뉴스 검색 시작: {search}")
+        driver.br_get("https://www.naver.com")
+        driver.br_log_default("네이버 접속 완료")
+        driver.br_screenshot("naver.png")
 
-        for page_num in range(0, page_nums * 10, 10):
-            url = f"https://www.google.com/search?q={search}&tbm=nws&start={page_num}"
-            driver.br_get(url)
-            time.sleep(2)
 
-            driver.br_wait_for(By.CSS_SELECTOR, "#rso > div > div > div", timeout=5)
-            posts = driver.br_find_all(By.CSS_SELECTOR, "#rso > div > div > div")
 
-            for post in posts:
-                try:
-                    post_info = post.br_find_all(
-                        By.CSS_SELECTOR, "div > div > a > div > div:nth-child(2) > div"
-                    )
-                    company = post_info[0].text if len(post_info) > 0 else ""
-                    title = post_info[1].text if len(post_info) > 1 else ""
-                    content = post_info[2].text if len(post_info) > 2 else ""
-                    time_text = post_info[-1].text if post_info else ""
-                    post_url = post.br_find(
-                        By.CSS_SELECTOR, "div > div > a"
-                    ).get_attribute("href")
 
-                    data.append([company, title, content, time_text, post_url])
 
-                except Exception as e:
-                    driver.br_log_error(f"❌ 게시물 파싱 중 오류: {e}")
 
-            driver.br_log_info(f"✅ {page_num // 10 + 1}페이지 완료 ({len(posts)}건 수집)")
 
-        df = pd.DataFrame(data, columns=["Company", "Title", "Content", "Time", "Link"])
-        driver.br_log_default(f"📊 총 {len(df)}건 뉴스 수집 완료")
 
-        df.to_excel(f"{search}_news_results.xlsx", index=False)
-        driver.br_log_default(f"💾 {search}_news_results.xlsx 파일 저장 완료")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# if __name__ == "__main__":
+#     search = "아이폰"
+#     page_nums = 5
+#     data = []
+
+#     with Browser(headless=False, exit=False) as driver:
+#         driver.br_log_default(f"🔍 구글 뉴스 검색 시작: {search}")
+
+#         for page_num in range(0, page_nums * 10, 10):
+#             url = f"https://www.google.com/search?q={search}&tbm=nws&start={page_num}"
+#             driver.br_get(url)
+#             time.sleep(2)
+
+#             driver.br_wait_for(By.CSS_SELECTOR, "#rso > div > div > div", timeout=5)
+#             posts = driver.br_find_all(By.CSS_SELECTOR, "#rso > div > div > div")
+
+#             for post in posts:
+#                 try:
+#                     post_info = post.br_find_all(
+#                         By.CSS_SELECTOR, "div > div > a > div > div:nth-child(2) > div"
+#                     )
+#                     company = post_info[0].text if len(post_info) > 0 else ""
+#                     title = post_info[1].text if len(post_info) > 1 else ""
+#                     content = post_info[2].text if len(post_info) > 2 else ""
+#                     time_text = post_info[-1].text if post_info else ""
+#                     post_url = post.br_find(
+#                         By.CSS_SELECTOR, "div > div > a"
+#                     ).get_attribute("href")
+
+#                     data.append([company, title, content, time_text, post_url])
+
+#                 except Exception as e:
+#                     driver.br_log_error(f"❌ 게시물 파싱 중 오류: {e}")
+
+#             driver.br_log_info(f"✅ {page_num // 10 + 1}페이지 완료 ({len(posts)}건 수집)")
+
+#         df = pd.DataFrame(data, columns=["Company", "Title", "Content", "Time", "Link"])
+#         driver.br_log_default(f"📊 총 {len(df)}건 뉴스 수집 완료")
+
+#         df.to_excel(f"{search}_news_results.xlsx", index=False)
+#         driver.br_log_default(f"💾 {search}_news_results.xlsx 파일 저장 완료")

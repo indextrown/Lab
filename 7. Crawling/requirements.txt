@@ -6,3 +6,5 @@ pandas
 psutil
 webdriver-manager
 openpyxl
+pyperclip
+pyautogui
