@@ -49,7 +49,6 @@ import pymysql
 from dotenv import load_dotenv
 import firebase_admin
 from firebase_admin import credentials, messaging
-from Logger import Logger
 
 
 # ==============================================
@@ -60,7 +59,7 @@ def initialize_firebase():
     if not firebase_admin._apps:
         cred = credentials.Certificate("./poppangfcm-firebase-adminsdk-fbsvc-84728d5589.json")
         firebase_admin.initialize_app(cred)
-        # print("🔥 Firebase 초기화 완료")
+        print("🔥 Firebase 초기화 완료")
     # 이미 초기화된 경우는 그냥 패스
 
 
@@ -93,7 +92,7 @@ def send_fcm_notification(fcm_token: str, title: str, body: str) -> bool:
             )
         )
         response = messaging.send(message)
-        Alert.log.plain(f"FCM 전송 성공 → {response}")
+        print(f"✅ FCM 전송 성공 → {response}")
         return True
     except Exception as e:
         print(f"❌ FCM 전송 실패: {e}")
@@ -104,8 +103,6 @@ def send_fcm_notification(fcm_token: str, title: str, body: str) -> bool:
 # ✅ Alert 클래스
 # ==============================================
 class Alert:
-    log = Logger("AlertAPI")
-
     @staticmethod
     def play(local: bool = True):
         """
@@ -119,10 +116,10 @@ class Alert:
         # ✅ DB 분기
         if local:
             DB_HOST = "127.0.0.1"
-            Alert.log.plain("🌱 로컬 DB 활성화")
+            print("🌱 로컬 DB 활성화")
         else:
             DB_HOST = "poppang.co.kr"   # 실제 배포용 DB 호스트로 맞춰두면 됨
-            Alert.log.plain("🚀 배포 DB 활성화")
+            print("🚀 배포 DB 활성화")
 
         connection = None
 
@@ -156,7 +153,7 @@ class Alert:
             # ✅ mysql.json 로드
             json_path = os.path.join(os.getcwd(), "mysql.json")
             if not os.path.exists(json_path):
-                Alert.log.error("❌ mysql.json 파일이 없습니다.")
+                print("❌ mysql.json 파일이 없습니다.")
                 return
 
             with open(json_path, "r", encoding="utf-8") as f:
@@ -180,13 +177,13 @@ class Alert:
 
                 if matches:
                     total_alert_users += 1
-                    Alert.log.plain(f"📢 [{nickname}]님의 키워드 '{keyword}' 관련 팝업 발견!")
-                    Alert.log.plain(f"   🔔 FCM 토큰: {fcm_token}")
+                    print(f"\n📢 [{nickname}]님의 키워드 '{keyword}' 관련 팝업 발견!")
+                    print(f"   🔔 FCM 토큰: {fcm_token}")
 
                     # 콘솔용 리스트 출력
                     for popup in matches:
                         preview = popup.get("caption_summary", "")[:70].replace("\n", " ")
-                        Alert.log.plain(f"   🎪 {popup['name']} | 내용: {preview}...")
+                        print(f"   🎪 {popup['name']} | 내용: {preview}...")
 
                     # 🔔 FCM 전송 (팝업마다 한 번씩)
                     for popup in matches:
@@ -201,15 +198,18 @@ class Alert:
 
                         send_fcm_notification(fcm_token, notif_title, notif_body)
                 else:
-                    Alert.log.plain(f"🔍 [{nickname}] 키워드 '{keyword}' 관련 팝업 없음")
-            Alert.log.plain(f"✅ Alert 완료 (알림 대상 유저 수: {total_alert_users})")
+                    print(f"🔍 [{nickname}] 키워드 '{keyword}' 관련 팝업 없음")
+
+            print("\n===============================")
+            print(f"✅ Alert 완료 (알림 대상 유저 수: {total_alert_users})")
+            print("===============================")
+
         except Exception as e:
-            Alert.log.error(f"❌ Alert 실행 중 오류: {e}")
+            print(f"❌ Alert 실행 중 오류: {e}")
         finally:
             if connection is not None:
                 connection.close()
-                Alert.log.info("🔌 DB 커넥션 종료")
-                print()
+                print("🔌 DB 커넥션 종료")
 
 
 if __name__ == "__main__":

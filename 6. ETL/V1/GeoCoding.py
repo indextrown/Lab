@@ -6,7 +6,6 @@ import json
 from dataclasses import dataclass
 from dotenv import load_dotenv
 from typing import Optional, List
-from Logger import Logger
 
 
 # ==============================
@@ -37,7 +36,6 @@ class GeoCoding:
         self.client_secret = os.getenv("CLIENT_SECRET")
         if not self.client_id or not self.client_secret:
             raise ValueError("❌ CLIENT_ID / CLIENT_SECRET 환경 변수가 누락되었습니다.")
-        self.log = Logger("GeoCodingAPI") 
 
     # -----------------------------------
     # 📍 1. 장소 검색 (Naver Local API)
@@ -75,7 +73,7 @@ class GeoCoding:
                 )
 
         except Exception as e:
-            self.log.warn(f"⚠️ Geocoding 실패 ({query}): {e}")
+            print(f"⚠️ Geocoding 실패 ({query}): {e}")
 
         return PlaceInfoDTO(
             road_address=None,
@@ -123,7 +121,7 @@ class GeoCoding:
         address = " ".join(parts)
 
         if address == original:
-            self.log.warn(f"⚠️ 치환 대상 아님: {original}")
+            print(f"⚠️ 치환 대상 아님: {original}")
 
         return address
 
@@ -141,7 +139,7 @@ class GeoCoding:
         위경도 값이 없을 경우 필터링
         """
         if not os.path.exists(input_file):
-            self.log.error(f"❌ 입력 파일 없음: {input_file}")
+            print(f"❌ 입력 파일 없음: {input_file}")
             return
 
         with open(input_file, "r", encoding="utf-8") as f:
@@ -152,7 +150,7 @@ class GeoCoding:
         for event in data:
             query = event.get("geocoding_query") or event.get("address")
             if not query:
-                self.log.warn(f"⚠️ 지오코딩 대상 없음: {event.get('name')}")
+                print(f"⚠️ 지오코딩 대상 없음: {event.get('name')}")
                 skipped += 1
                 continue
 
@@ -160,7 +158,7 @@ class GeoCoding:
 
             # 📌 위경도 값 없는 경우 제외
             if place_info.longitude is None or place_info.latitude is None:
-                self.log.warn(f"🚫 위경도 없음 → 스킵: {event.get('name')} ({query})")
+                print(f"🚫 위경도 없음 → 스킵: {event.get('name')} ({query})")
                 skipped += 1
                 continue
 
@@ -176,7 +174,7 @@ class GeoCoding:
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(enriched, f, ensure_ascii=False, indent=2)
 
-        self.log.info(f"Geocoding 완료: {output_file} (총 {len(enriched)}건, 스킵 {skipped}건)")
+        print(f"✅ Geocoding 완료: {output_file} (총 {len(enriched)}건, 스킵 {skipped}건)")
 
     # -----------------------------------
     # 🚀 3. 실행 메서드
@@ -186,6 +184,7 @@ class GeoCoding:
         geo = GeoCoding()
         geo.add_geocoding_to_json()
         print()
+
 
 if __name__ == "__main__":
     GeoCoding.play()

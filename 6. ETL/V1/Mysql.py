@@ -9,8 +9,6 @@ from datetime import datetime
 # ✅ Vision 기능 import
 import VisionAPI
 
-from Logger import Logger
-
 
 # ==============================
 # 📦 DTO 정의
@@ -98,26 +96,24 @@ def build_payload(item: dict) -> PopupUploadDTO:
 # 🐬 Mysql 업로드 클래스
 # ==============================
 class Mysql:
-    log = Logger("MysqlAPI")
-
     @staticmethod
     def send_popup(item: dict, api_url: str) -> bool:
         """Vision 통과한 팝업 정보를 API로 업로드"""
         payload_dto = build_payload(item)
         payload = json.loads(json.dumps(payload_dto, default=lambda o: o.__dict__))
 
-        # Mysql.log.plain("📤 업로드 요청 payload:")
-        # print(json.dumps(payload, ensure_ascii=False, indent=2))
+        print("\n📤 업로드 요청 payload:")
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
 
         headers = {"Content-Type": "application/json"}
         response = requests.post(api_url, json=payload, headers=headers, timeout=10)
 
         if response.status_code == 200:
-            Mysql.log.info(f"업로드 성공: {payload_dto.instaPostId}")
+            print(f"✅ 업로드 성공: {payload_dto.instaPostId}")
             return True
         else:
-            Mysql.log.error(f"업로드 실패 ({response.status_code}): {payload_dto.instaPostId}")
-            # print(response.text)
+            print(f"❌ 업로드 실패 ({response.status_code}): {payload_dto.instaPostId}")
+            print(response.text)
             return False
 
     @staticmethod
@@ -133,18 +129,18 @@ class Mysql:
 
         # ✅ URL 분기
         if local:
-            API_URL = "http://127.0.0.1:4003/api/v1/popup"
-            Mysql.log.plain("🌱 로컬 모드 활성화")
+            API_URL = "http://127.0.0.1:8500/api/v1/popup"
+            print("🌱 로컬 모드 활성화")
         else:
             API_URL = "https://poppang.co.kr/api/v1/popup"
-            Mysql.log.plain("🚀 배포 모드 활성화")
+            print("🚀 배포 모드 활성화")
 
-        Mysql.log.plain(f"📂 Working DIR: {os.getcwd()}")
-        Mysql.log.plain(f"📄 JSON 경로: {file_path} → 존재? {os.path.exists(file_path)}")
-        Mysql.log.plain(f"🌐 API URL: {API_URL}")
+        print(f"📂 Working DIR: {os.getcwd()}")
+        print(f"📄 JSON 경로: {file_path} → 존재? {os.path.exists(file_path)}")
+        print(f"🌐 API URL: {API_URL}")
 
         if not os.path.exists(file_path):
-            Mysql.log.error("❌ geo.json 파일이 없습니다.")
+            print("❌ geo.json 파일이 없습니다.")
             return
 
         with open(file_path, "r", encoding="utf-8") as f:
@@ -161,8 +157,8 @@ class Mysql:
             media_type = item.get("media_type")
             image_paths = item.get("image_paths", [])
 
-            # print(f"📌 처리중: insta_post_id={insta_post_id}")
-            # print(f"📸 이미지 경로: {image_paths}")
+            print(f"\n📌 처리중: insta_post_id={insta_post_id}")
+            print(f"📸 이미지 경로: {image_paths}")
 
             # 🎥 VIDEO Vision 스킵
             if media_type == "VIDEO":
@@ -184,14 +180,14 @@ class Mysql:
                     has_human = VisionAPI.contains_human_in_all_files(image_paths)
                     if has_human:
                         human_skipped += 1
-                        Mysql.log.error(f"Vision 감지됨 → 업로드 스킵 insta_post_id={insta_post_id}")
+                        print(f"🚫 Vision 감지됨 → 업로드 스킵 insta_post_id={insta_post_id}")
                         continue
                 except Exception as e:
-                    Mysql.log.error(f"Vision 검사 중 오류: {e}")
+                    print(f"❌ Vision 검사 중 오류: {e}")
                     skipped += 1
                     continue
             else:
-                Mysql.log.warn(f"image_paths 비어있음 → Vision 검사 스킵")
+                print(f"⚠️ image_paths 비어있음 → Vision 검사 스킵")
 
             # ✅ Vision 통과 후 업로드
             if Mysql.send_popup(item, API_URL):
@@ -204,13 +200,13 @@ class Mysql:
         output_path = os.path.join(os.getcwd(), "mysql.json")
         with open(output_path, "w", encoding="utf-8") as out_file:
             json.dump(success_list, out_file, ensure_ascii=False, indent=2)
-        
-        Mysql.log.plain(f"✅ 업로드 완료: {inserted}/{total}")
-        Mysql.log.plain(f"🚫 Vision 필터로 스킵: {human_skipped}")
-        Mysql.log.plain(f"⚠️ 오류 또는 기타 스킵: {skipped}")
-        Mysql.log.info(f"성공 데이터 저장 완료 → {output_path}")
-        print()
+        print(f"\n💾 성공 데이터 저장 완료 → {output_path}")
 
+        print("\n===============================")
+        print(f"✅ 업로드 완료: {inserted}/{total}")
+        print(f"🚫 Vision 필터로 스킵: {human_skipped}")
+        print(f"⚠️ 오류 또는 기타 스킵: {skipped}")
+        print("===============================")
 
 # ==============================
 # 🏁 실행

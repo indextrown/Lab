@@ -8,7 +8,6 @@ from datetime import datetime
 from urllib.parse import urlparse
 from dataclasses import dataclass
 from typing import List, Optional
-from Logger import Logger
 
 # ==============================
 # 📊 카테고리 매핑
@@ -108,7 +107,6 @@ class GptAPI:
             "Authorization": f"Bearer {self.access_token}",
             "Content-Type": "application/json",
         })
-        self.log = Logger("GptAPI") 
 
     # ---------- 문자열 정제 ----------
     @staticmethod
@@ -143,7 +141,7 @@ class GptAPI:
         json_data = [obj.__dict__ for obj in data]
         with open(path, "w", encoding="utf-8") as f:
             json.dump(json_data, f, indent=2, ensure_ascii=False)
-        self.log.info(f"📁 저장 완료: {os.path.abspath(path)}")
+        print(f"📁 저장 완료: {os.path.abspath(path)}")
         return os.path.abspath(path)
 
     # ---------- GPT 프롬프트 (원문 유지) ----------
@@ -341,7 +339,7 @@ class GptAPI:
         parsed = []
         for obj in data:
             if "recommend" not in obj:
-                self.log.warn(f"⚠️ recommend 누락 → {obj.get('name')}")
+                print(f"⚠️ recommend 누락 → {obj.get('name')}")
             recommend_list = obj.get("recommend") or ["기타"]
             parsed.append(
                 GptParsedEventDTO(
@@ -392,7 +390,7 @@ class GptAPI:
             orig = section_to_post.get(event.section, InstagramPostDTO("", "", "", "", []))
             recommend_ids = convert_recommend_to_ids(event.recommend)  # ✅ 문자열 → 정수 변환
 
-            # print("recommend 문자열:", event.recommend, "→ recommend IDs:", recommend_ids)
+            print("디버깅: recommend 문자열:", event.recommend, "→ recommend IDs:", recommend_ids)
             results.append(
                 PopupEventDTO(
                     name=event.name,
@@ -466,7 +464,7 @@ class GptAPI:
 
                 image_paths.append(os.path.abspath(filepath))
                 valid_image_urls.append(url)  # ✅ 실제로 성공한 URL만 유지
-                self.log.plain(f"이미지 저장 완료: {filepath}")
+                print(f"✅ 이미지 저장 완료: {filepath}")
 
             except Exception as e:
                 print(f"❌ 이미지 다운로드 처리 중 오류 ({url}): {e}")
@@ -513,14 +511,14 @@ class GptAPI:
         before_len = len(results)
         results = self.filter_required_fields(results)
         after_len = len(results)
-        self.log.plain(f"📌 필수 필드 필터링: {before_len - after_len}건 제외됨")
+        print(f"📌 필수 필드 필터링: {before_len - after_len}건 제외됨")
 
         # 🧹 이미지 없는 팝업 제거
         before_len = len(results)
         results = [event for event in results if len(event.image_url) > 0 or len(event.image_paths) > 0]
         after_len = len(results)
 
-        self.log.plain(f"🧾 총 {before_len}건 중 {before_len - after_len}건은 이미지 없음으로 제외됨")
+        print(f"🧾 총 {before_len}건 중 {before_len - after_len}건은 이미지 없음으로 제외됨")
 
         return results
 

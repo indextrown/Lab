@@ -5,7 +5,6 @@ import os
 from dotenv import load_dotenv
 from dataclasses import dataclass
 from typing import List, Optional
-from Logger import Logger
 
 # ✅ .env 로드
 load_dotenv()
@@ -27,7 +26,6 @@ class InstagramAPI:
         self.access_token = access_token
         self.user_id = user_id
         self.base_url = base_url
-        self.log = Logger("InstaAPI") 
 
     def get_hashtag_id(self, hashtag: str) -> Optional[str]:
         """
@@ -45,11 +43,12 @@ class InstagramAPI:
             data = response.json().get("data", [])
 
             if not data:
-                self.log.warn(f"⚠️ 해시태그 ID를 찾을 수 없습니다: '{hashtag}'")
+                print(f"⚠️ 해시태그 ID를 찾을 수 없습니다: '{hashtag}'")
                 return None
+
             return data[0]["id"]
         except requests.RequestException as e:
-            self.log.error(f"❌ 해시태그 ID 요청 실패: {e}")
+            print(f"❌ 해시태그 ID 요청 실패: {e}")
             return None
 
     def get_recent_media(self, hashtag_id: str, limit: int = 5) -> List[InstagramPostDTO]:
@@ -99,9 +98,9 @@ class InstagramAPI:
             return parsed_posts
 
         except requests.RequestException as e:
-            self.log.error(f"❌ 요청 실패: {e}")
+            print(f"❌ 요청 실패: {e}")
         except ValueError:
-            self.log.error("❌ JSON 파싱 실패")
+            print("❌ JSON 파싱 실패")
         return []
 
     def save_json(self, data: List[InstagramPostDTO], filename_prefix="media", hashtag=None):
@@ -119,9 +118,9 @@ class InstagramAPI:
         try:
             with open(filename, "w", encoding="utf-8") as f:
                 json.dump(json_data, f, indent=4, ensure_ascii=False)
-            self.log.info(f"저장 완료: {os.path.abspath(filename)}")
+            print(f"📁 저장 완료: {os.path.abspath(filename)}")
         except Exception as e:
-            self.log.error(f"❌ 저장 실패: {e}")
+            print(f"❌ 저장 실패: {e}")
 
     @staticmethod
     def play():
@@ -133,21 +132,21 @@ class InstagramAPI:
         user_id = os.getenv("IG_USER_ID")
         hashtag = "팝업스토어"
         base_url = "https://graph.facebook.com/v20.0"
-        log = Logger("InstaAPI")
 
         if not access_token or not user_id:
-            log.error("❌ .env 설정 누락: ACCESS_TOKEN 또는 IG_USER_ID")
+            print("❌ .env 설정 누락: ACCESS_TOKEN 또는 IG_USER_ID")
             return
 
         api = InstagramAPI(access_token, user_id, base_url)
         hashtag_id = api.get_hashtag_id(hashtag)
         if not hashtag_id:
-            log.error(f"❌ 해시태그 ID를 찾을 수 없습니다: {hashtag}")
+            print(f"❌ 해시태그 ID를 찾을 수 없습니다: {hashtag}")
             return
 
         posts = api.get_recent_media(hashtag_id)
         api.save_json(posts, hashtag=hashtag)
         print()
+
 
 if __name__ == "__main__":
     InstagramAPI.play()
