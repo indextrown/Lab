@@ -21,7 +21,6 @@ class InstagramPostDTO:
     timestamp: str
     media_urls: List[str]
 
-
 class InstagramAPI:
     def __init__(self, access_token: str, user_id: str, base_url: str):
         self.access_token = access_token
@@ -147,7 +146,6 @@ class InstagramAPI:
 
         posts = api.get_recent_media(hashtag_id)
         api.save_json(posts, hashtag=hashtag)
-        print()
 
 if __name__ == "__main__":
     InstagramAPI.play()

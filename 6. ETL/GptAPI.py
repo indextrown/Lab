@@ -47,7 +47,6 @@ def convert_recommend_to_ids(recommend_list: List[str]) -> List[int]:
 # ==============================
 # 📦 DTO 정의
 # ==============================
-
 @dataclass
 class InstagramPostDTO:
     """📸 Instagram 원본 데이터"""
@@ -96,7 +95,6 @@ class PopupEventDTO:
 # ==============================
 # 🧠 GPT 파이프라인
 # ==============================
-
 class GptAPI:
     REQUIRED_FIELDS = ["name", "start_date", "end_date", "address", "region", "caption_summary", "recommend"]  # ✅ 추가
     def __init__(self, access_token, model="gpt-4o-mini"):
@@ -193,6 +191,11 @@ class GptAPI:
             - 'B1', '1층', '2F', 'B2F', '지하 1층'
             - '앞', '근처', '맞은편', '옆', '뒷편', '앞쪽', '뒤편'
             - '~에서', '~앞', '~근처', '~맞은편'
+            3-1) 단, **도로명주소와 관련된 숫자나 구조는 반드시 유지**해야 합니다.
+            - 예: "대전 중구 선화로 97번길 59-1" ✅
+            - 예: "서울 강남구 테헤란로 152" ✅
+            - ❌ 제거 대상이 아닌 숫자: '로', '길', '번길' 뒤의 숫자, 혹은 '-'로 이어진 번지번호 등은 모두 유지
+            - ❌ 잘못된 예시: "대전 중구 선화로" (주소의 숫자 제거 금지)
             4) 브랜드명, 팝업 이름, 아티스트 이름, 제품 이름 등은 반드시 제거하세요.
             - 예: "서울 신촌유플렉스 후르츠바스켓" → "서울 신촌유플렉스"
             - 예: "서울 현대백화점 압구정본점 김재중" → "서울 현대백화점 압구정본점"
@@ -536,7 +539,6 @@ class GptAPI:
         api = GptAPI(token)
         results = api.process_file("popup.json", batch_size=10, download=download)
         api.file_save(results)
-        print()
 
 
 # ==============================

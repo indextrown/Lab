@@ -137,11 +137,11 @@ class Mysql:
             Mysql.log.plain("🌱 로컬 모드 활성화")
         else:
             API_URL = "https://poppang.co.kr/api/v1/popup"
-            Mysql.log.plain("🚀 배포 모드 활성화")
+            # Mysql.log.plain("🚀 배포 모드 활성화")
 
-        Mysql.log.plain(f"📂 Working DIR: {os.getcwd()}")
-        Mysql.log.plain(f"📄 JSON 경로: {file_path} → 존재? {os.path.exists(file_path)}")
-        Mysql.log.plain(f"🌐 API URL: {API_URL}")
+        # Mysql.log.plain(f"📂 Working DIR: {os.getcwd()}")
+        # Mysql.log.plain(f"📄 JSON 경로: {file_path} → 존재? {os.path.exists(file_path)}")
+        # Mysql.log.plain(f"🌐 API URL: {API_URL}")
 
         if not os.path.exists(file_path):
             Mysql.log.error("❌ geo.json 파일이 없습니다.")
@@ -209,7 +209,6 @@ class Mysql:
         Mysql.log.plain(f"🚫 Vision 필터로 스킵: {human_skipped}")
         Mysql.log.plain(f"⚠️ 오류 또는 기타 스킵: {skipped}")
         Mysql.log.info(f"성공 데이터 저장 완료 → {output_path}")
-        print()
 
 
 # ==============================

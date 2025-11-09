@@ -119,10 +119,10 @@ class Alert:
         # ✅ DB 분기
         if local:
             DB_HOST = "127.0.0.1"
-            Alert.log.plain("🌱 로컬 DB 활성화")
+            # Alert.log.plain("🌱 로컬 DB 활성화")
         else:
             DB_HOST = "poppang.co.kr"   # 실제 배포용 DB 호스트로 맞춰두면 됨
-            Alert.log.plain("🚀 배포 DB 활성화")
+            # Alert.log.plain("🚀 배포 DB 활성화")
 
         connection = None
 
@@ -208,7 +208,7 @@ class Alert:
         finally:
             if connection is not None:
                 connection.close()
-                Alert.log.info("🔌 DB 커넥션 종료")
+                Alert.log.info("🔌 DB 커넥션 종료\n\n\n")
                 print()
 
 

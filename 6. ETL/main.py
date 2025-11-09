@@ -12,7 +12,7 @@ from GeoCoding import GeoCoding
 from Mysql import Mysql
 from Alert import Alert
 
-        
+# 서버에서느 local = true로 해주세요(루프백 아이피이기 때문)
 if __name__ == "__main__":
     InstagramAPI.play()         # 인스타그램 API 실행하여 팝업태그 게시글 반환 -> popup.json
     GptAPI.play(download=True)  # popup.json을 GPT로 정제 -> gpt.json

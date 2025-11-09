@@ -98,7 +98,7 @@ def contains_human_in_all_files(image_paths: list[str], batch_size: int = 15) ->
                 continue
 
             if len(res.face_annotations) > 0:
-                print(f"🚫 사람 감지됨: {batch[idx]}")
+                # print(f"🚫 사람 감지됨: {batch[idx]}")
                 return True
 
             for label in res.label_annotations:
@@ -180,7 +180,7 @@ def contains_human_in_all_urls(image_urls: list[str]) -> bool:
             continue
 
         if len(res.face_annotations) > 0:
-            print(f"🚫 사람 감지됨: {valid_urls[idx]}")
+            # print(f"🚫 사람 감지됨: {valid_urls[idx]}")
             return True
 
         for label in res.label_annotations:

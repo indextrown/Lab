@@ -173,10 +173,19 @@ class GeoCoding:
             enriched.append(new_event)
 
         # 3️⃣ 저장
-        with open(output_file, "w", encoding="utf-8") as f:
-            json.dump(enriched, f, ensure_ascii=False, indent=2)
+        self.file_save(enriched, output_file)
+        # self.log.info(f"Geocoding 완료: {output_file} (총 {len(enriched)}건, 스킵 {skipped}건)")
 
-        self.log.info(f"Geocoding 완료: {output_file} (총 {len(enriched)}건, 스킵 {skipped}건)")
+    # -----------------------------------
+    # 💾 JSON 저장 함수 
+    # -----------------------------------
+    def file_save(self, data: List[dict], filename: str = "geo.json"):
+        """지오코딩 결과를 파일로 저장"""
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        abs_path = os.path.abspath(filename)
+        self.log.info(f"📁 저장 완료: {abs_path}")
+        return abs_path
 
     # -----------------------------------
     # 🚀 3. 실행 메서드
@@ -185,7 +194,6 @@ class GeoCoding:
     def play():
         geo = GeoCoding()
         geo.add_geocoding_to_json()
-        print()
 
 if __name__ == "__main__":
     GeoCoding.play()
