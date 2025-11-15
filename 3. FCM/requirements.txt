@@ -1,3 +1,5 @@
 # python -m pip install --upgrade pip
 # pip install -r requirements.txt  
 firebase_admin
+mysql-connector-python
+python-dotenv
