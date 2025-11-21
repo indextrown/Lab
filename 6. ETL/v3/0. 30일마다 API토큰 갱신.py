@@ -43,6 +43,7 @@ def refresh_facebook_graph_token():
                     f.write(f"INSTA_ACCESS_TOKEN={new_token}\n")
                 else:
                     f.write(line)
+
         print("📝 .env 갱신 완료")
     else:
         print("❌ 갱신 실패:", response)

@@ -169,15 +169,7 @@ class Mysql:
                 print(f"🎥 VIDEO 타입 → 전체 스킵")
                 skipped += 1
                 continue
-
-            # if media_type == "VIDEO":
-            #     print(f"🎥 VIDEO 타입 → Vision 검사 스킵")
-            #     if Mysql.send_popup(item, API_URL):
-            #         inserted += 1
-            #     else:
-            #         skipped += 1
-            #     continue
-
+            
             # 🧠 Vision 검사
             if image_paths:
                 try:
