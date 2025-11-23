@@ -117,7 +117,7 @@ class GptAPI:
             "Authorization": f"Bearer {self.access_token}",
             "Content-Type": "application/json",
         })
-        self.log = Logger("GptAPI") 
+        self.log = Logger("GptAPI", use_color=False)
 
     # ---------- 문자열 정제 ----------
     @staticmethod
@@ -314,7 +314,6 @@ class GptAPI:
         {body}
         """
 
-
     # ---------- GPT 호출 ----------
     def call_gpt(self, prompt, max_tokens=1500, retries=2):
         payload = {
@@ -488,8 +487,6 @@ class GptAPI:
         event.image_paths = image_paths
         event.image_url = valid_image_urls  # ✅ webp 제거 반영
 
-
-
     # ---------- 전체 파이프라인 ----------
     def process_file(self, filename, batch_size=10, download=False):
         posts = self.file_open(filename)
@@ -538,7 +535,6 @@ class GptAPI:
 
         return results
 
-
     # ---------- 실행 ----------
     @staticmethod
     def play(download=False):
@@ -550,7 +546,6 @@ class GptAPI:
         api = GptAPI(token)
         results = api.process_file("popup.json", batch_size=10, download=download)
         api.file_save(results)
-
 
 # ==============================
 # 🏁 실행
